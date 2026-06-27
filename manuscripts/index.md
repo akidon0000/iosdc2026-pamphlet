@@ -1,4 +1,4 @@
-<h1 style="text-align: center;">明日から使える！<br>海外コンペで評価された<br>アクセシビリティ実装ガイド</h1>
+<h1 style="text-align: center;">明日から使える！海外コンペで評価された<br>アクセシビリティ実装ガイド</h1>
 
 <div class="author-info">
   <div class="profile-container">
@@ -13,40 +13,21 @@
 
 アクセシビリティ対応は、一部のユーザーだけに向けた特別な配慮ではありません。すべての人の使いやすさに直結する「アプリの実装品質」そのものです。
 
-iOSにはDynamic Type・Voice Control・Switch Controlといった強力な支援技術が標準で備わっています。しかし、これらは開発者側が意識して実装してこそ、その力を最大限に発揮します。また、タップ領域やコントラスト比のように、OSの標準機能だけでは担保できず、開発者側が意図して担保する要素も存在します。
+iOSにはDynamic Type・Voice Control・Switch Controlといった強力な支援技術が標準で備わっています。ただし、これらは開発者が「正しい情報を渡す」ことで初めて力を発揮します。さらにタップ領域やコントラスト比のように、OSの標準機能だけでは担保できず、実装でしか守れない領域もあります。
 
-本記事では、筆者が今年のiOSDevUK Accessibility Competitionで優勝した実装を題材に、AppleのHuman Interface Guidelinesが定めるアクセシビリティ項目（Vision / Mobility / Cognitive / Hearing / Speechの5カテゴリ）を軸として、「何に・どう対応するか」を体系的に整理します。具体的には、文字サイズに追従するレイアウト、WCAGを満たすコントラストとその確認方法、VoiceOverの読み上げ順やカスタム読み上げの設計、地図を読み上げに対応させる工夫、色だけで状態を判断させない方法などを、コードを交えて解説します。
+本記事では、iOSDevUK主催のアクセシビリティ改善コンペで優勝した実装（題材アプリ **MythConf**／SwiftUI製）を、AppleのHIG（Human Interface Guidelines）が定める5カテゴリに沿ってコード中心に解説します。「何に・どう対応するか」を、明日から手元のアプリへ取り入れられる粒度で並べました。
 
-さらに、観点が少し異なりますが、ユーザー体験を底上げするものとして、「押せる」とひと目でわかるインタラクション設計や、低速回線でも快適に動作することを前提にした実装についても取り上げます。
+HIGは、アクセシビリティを「障害」ではなく「どんな利用者の、どんな困りごとに対応するか」という観点で次の5つに整理しています。本記事もこの5カテゴリを章立ての軸にします。
 
-明日から自分のアプリに取り入れてみたくなる内容をお届けします！
-
-## 題材は「カンファレンスアプリのアクセシビリティ改善コンペ」
-
-題材にするのは、iOSDevUK（英国のiOSカンファレンス）が主催したアクセシビリティ改善コンペです。お題は公式カンファレンスアプリ **MythConf**（SwiftUI製）。GAAD（Global Accessibility Awareness Day）に向けた約2週間で、アプリをどれだけアクセシブルにできるかをPull Requestで競う、という内容でした。
-
-審査はAppleのHuman Interface Guidelines（以下HIG）が挙げるアクセシビリティ項目をベースに行われます。筆者はこのコンペに参加し、ありがたいことに優勝することができました。本記事は、その時に実装した内容を「HIGの5カテゴリ」という地図の上に並べ直したものです。
-
-正直に告白すると、自分のアプリで「VoiceOverを起動して全画面を端から端まで触る」「Dynamic Typeを最大まで上げてレイアウトの崩れを確認する」といった作業を、普段どれだけサボっているかを痛感しました。支援技術は一度本気で全部オンにして操作してみると、驚くほど多くの「詰み」が見つかります。この記事がその最初の一歩のきっかけになれば嬉しいです。
-
-### 全体像：OSが用意するもの／開発者が担保するもの
-
-アクセシビリティ対応は「謎の呪文を唱える作業」ではありません。大きく2種類に分けて考えると整理しやすくなります。
-
-- **OSが支援技術として用意してくれているもの**：VoiceOver（読み上げ）、Dynamic Type（文字サイズ）、Voice Control（音声操作）、Switch Control（スイッチ操作）、Full Keyboard Access（キーボード操作）、Reduce Motion / Reduce Transparency（動き・透明度の抑制）など。これらは、開発者が「正しい情報を渡す」ことで初めて力を発揮します。
-- **実装でしか担保できないもの**：タップ領域のサイズ、文字色と背景色のコントラスト比、要素の読み上げ順、色だけに依存しない状態表現など。これらはOSが自動でやってはくれません。
-
-HIGはこれらを利用者の特性で5カテゴリに整理しています。本記事もこの順で進めます。
-
-| カテゴリ | 主な対象 | 本記事で扱う実装の例 |
+| カテゴリ | 誰の・どんな困りごとか | 本記事で扱う実装 |
 |---|---|---|
-| Vision | 視覚 | Dynamic Type / コントラスト / 色非依存 / VoiceOver |
-| Mobility | 操作・運動 | 44ptタップ領域 / ジェスチャ代替 / キーボード / Voice Control |
-| Cognitive | 認知 | 一貫したラベル / 空状態 / Reduce Motion |
-| Hearing | 聴覚 | 触覚フィードバック |
-| Speech | 発話 | キーボードのみ操作 / Switch Control |
+| **Vision**（視覚）| 全盲・ロービジョン・色覚特性。「見て理解する」前提が崩れる | Dynamic Type / コントラスト / 色非依存 / VoiceOver |
+| **Mobility**（操作・運動）| 細かい操作や正確なタップ・ジェスチャが難しい | 44ptタップ領域 / ジェスチャ代替 / キーボード / Voice Control |
+| **Cognitive**（認知）| 情報量・複雑さ・急な動きが負担になりやすい | 一貫したラベル / 空状態 / Reduce Motion |
+| **Hearing**（聴覚）| 音の通知・フィードバックが届きにくい | 触覚・視覚でも同じ情報を伝える |
+| **Speech**（発話）| 声を出しての操作が難しい | キーボードのみ操作 / Switch Control |
 
-<!-- 画像: HIG 5カテゴリのイメージ図（任意）。なくても可 -->
+これらは特定の誰かだけの話ではありません。明るい屋外で画面が見づらい、片手がふさがっている、騒がしくて音が聞こえない——誰もが一時的に「同じ状況」に置かれます。だからこそ、すべての人の使いやすさに効いてきます。
 
 ## Vision｜文字サイズに追従する：Dynamic Type
 
@@ -356,9 +337,9 @@ if shouldShowCache {
 
 <div style="display: flex; align-items: center; gap: 20px;">
   <div style="flex: 0 0 auto; text-align: center;">
-    <!-- 画像: 優勝PR(#4)へのQRコード。後で qr.png を差し替え -->
+    <!-- 画像: 解説した実装のPR(#4)へのQRコード。後で qr.png を差し替え -->
     <img src="./images/qr.png" alt="qrコード" style="max-width: 75px; height: auto;" /><br>
-    <span style="font-size: 0.7em; color: #555;">優勝したPull Request (#4)</span>
+    <span style="font-size: 0.7em; color: #555;">本記事で解説した実装 (PR #4)</span>
   </div>
   <div class="profile-container">
     <img src="./images/icon.jpg" alt="アイコン" class="profile-icon" style="height: 40px;" />
