@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "pdf": "vivliostyle build",
+    "preview": "vivliostyle preview",
     "open": "open ./output/output.pdf",
     "start": "vivliostyle build && open ./output/output.pdf",
     "press": "vivliostyle build --preflight press-ready -o output/press.pdf",
