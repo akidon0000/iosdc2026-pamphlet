@@ -1,6 +1,6 @@
 module.exports = {
-  title: 'タイトル名',
-  author: '著者名',
+  title: '明日から使える！海外コンペで評価されたアクセシビリティ実装ガイド',
+  author: '@akidon0000',
   language: 'ja',
   size: 'A4',
   theme: [
