@@ -2,7 +2,9 @@
 
 ## 概要
 
-「個人開発で徳島大学生60％以上の心を掴んだアプリ・そして手放した話」
+「明日から使える！海外コンペで評価されたアクセシビリティ実装ガイド」
+
+iOSDevUK Accessibility Challenge で評価された SwiftUI 実装を題材に、アクセシビリティ対応を5つのカテゴリ別に解説するガイド記事。CfP ドラフトは [cfp.md](cfp.md) を参照。
 
 - [iOSDC Japan 2026](https://fortee.jp/iosdc-japan-2026)
 
