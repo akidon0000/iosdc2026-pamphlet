@@ -13,6 +13,11 @@
   }
 }
 
+/* 引用ブロックの背景を行全体ではなく文字幅にフィットさせる */
+blockquote {
+  display: table;
+}
+
 /* 著者紹介のブロック */
 .author-info {
   display: flex;

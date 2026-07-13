@@ -11,13 +11,27 @@
 
 ---
 
-## アクセシビリティ対応の全体像
+**誰もが・どんな状況でも、必要とする情報に辿り着けること**——それがアクセシビリティ対応の本質だと私は考えています。視覚や聴覚といった身体特性はもちろん、画面の向きやデバイスの違いまで、利用者の置かれた状況はさまざまです。いかなる状況であっても情報に辿り着けるようにする。アクセシビリティ対応は一部のユーザーだけのための特別な対応ではなく、すべての人の使いやすさに直結する「アプリの実装品質」と捉えると良いかもしれません。
 
-**誰もが・どんな状況でも、必要な情報に辿り着けること**——それがアクセシビリティの本質だと私は考えています。視覚や聴覚といった身体特性はもちろん、画面の向きやデバイスの違いまで、利用者の置かれた状況はさまざまです。そのどれであっても情報に辿り着けるようにする。本記事のすべての施策は、この一点に向かっています。
+iOSには、VoiceOverやDynamic Type、Voice Controlといった強力な支援技術が標準で備わっています。これらは、開発側が意識して対応してこそ、その力を最大限に発揮します。さらに、タップ領域の広さやコントラストのように、標準の支援技術だけでは満たせず、実装側でしか担保できない領域もあります。
 
-だからアクセシビリティ対応は一部のユーザーだけのための特別な対応ではなく、すべての人の使いやすさに直結する「アプリの実装品質」そのものです。iOSには、VoiceOverやDynamic Type、Voice Controlといった強力な支援技術が標準で備わっています。これらは、開発側が意識して対応してこそ、その力を最大限に発揮します。さらに、タップ領域の広さ（Mobility）やコントラストのように、標準の支援技術だけでは満たせず、実装側でしか担保できない領域もあります。
+本記事では、著者が iOSDevUK カンファレンスにて Accessibility Challenge で優勝した実装を元に、AppleのHuman Interface Guidelinesに沿ってアクセシビリティの解説をします。
 
-本記事では、iOSDevUK Accessibility Competitionで優勝した実装を、AppleのHIG（Human Interface Guidelines）に沿ってコード中心に解説します。
+## 題材資料：iOSDevUK Accessibility Challenge
+
+<figure style="float: left; margin: 0 20px 8px 0; text-align: center; display: inline-block;">
+  <img src="./images/dynamic-xsmall.png" alt="MythConfのProgramme画面。セッション一覧が表示されている" style="height: 350px; border: 1px solid #000; display: block;" />
+  <figcaption style="font-size: 0.7em; color: #555;">MythConfのProgramme画面</figcaption>
+</figure>
+
+iOSDevUK Accessibility Challengeは、MythConf という架空カンファレンスアプリを題材にアクセシビリティを向上を競うコンペティションです。このアプリはMProgramme、Speakers、Locations、My Scheduleの4タブを持ち、アクセシビリティの観点で改善できる箇所が多数存在していました。
+
+ここに本記事の対応を踏まえたPRを日本から送ったところ、主催のRobin Kanatzar氏から次の評とともに優勝の連絡をいただくことができました。
+
+> We had some great pull requests, but his was our favorite.
+
+<div style="clear: both;"></div>
+
 
 Appleはアクセシビリティ対応のガイドラインを、利用者の特性に応じて大きく5つの領域に分けて定義しており、これは今回の題材としたコンペの評価軸でもありました。本記事も主にこの5つを地図として進めますが、これがすべてではなく、ここに収まりきらない観点も存在します。
 
@@ -25,25 +39,29 @@ Appleはアクセシビリティ対応のガイドラインを、利用者の特
 - **Mobility（身体機能）**：細かな操作が難しくても扱えるように。
 - **Cognitive（認知）**：迷わず理解できるように。
 - **Hearing（聴覚）**：聞こえなくても気づけるように。
-- **Speech（発話）**：声を出さなくても操作できるように。
-
-## 題材：iOSDevUK Accessibility Challenge
-
-解説に使用するのは、カンファレンスのデモアプリ **MythConf**です。Programme、Speakers、Locations、My Scheduleの4タブを持ちます。
-
-<div style="text-align: center;">
-  <img src="./images/dynamic-xsmall.png" alt="MythConfのProgramme画面。セッション一覧が表示されている" style="height: 320px;" />
-</div>
-
----
+- **Speech（発話）**：声を使わなくても操作できるように。
 
 ## Vision｜文字サイズに追従する：Dynamic Type
 
-ユーザーが設定アプリで文字サイズを上げると、`.body` などのテキストスタイルを使っている箇所は自動で拡大されます。問題は **レイアウト** です。横並びのまま文字だけ大きくすると、見切れ・重なり・横スクロールが発生します。
+文字サイズの追従は、アクセシビリティ対応の基本といえるでしょう。ユーザーが設定アプリで文字サイズを上げると、`.body` などのテキストスタイルを使っている箇所は自動で拡大されます。このとき考慮すべきなのが、**レイアウトの変化** と **情報量の変化** の2つです。
 
-### はみ出したら縦に積む `ViewThatFits`
+### レイアウトの変化に対応する
 
-最大の対策は「横に収まらなければ縦に積む」ことです。たとえばセッション詳細の「時刻＋会場名」の行は、会場名が長いときも文字サイズが大きいときも横に入りきらなくなります。ここで使うのが公式の `ViewThatFits` です。
+文字サイズが大きくなった際の簡単な対策は「横に収まらなければ縦に積む」ことです。ここで使うのが `ViewThatFits` です。`ViewThatFits` は与えた候補を上から試し、収まる最初のものを採用します。文字サイズの境界（AX1）を待たず、実際にはみ出した瞬間に縦積みへ切り替わるのがポイントです。
+
+> ViewThatFitsは、HStackやVStackなどビューが変化したとしてもビューが作り直されることはなく、パフォーマンスの低下を防ぐとこができます。仮に `if` / `else` の各分岐で実装した場合、サイズが境界を跨ぐたびにビューが丸ごと作り直され、パフォーマンスも低下していたでしょう。
+
+<div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
+  <figure style="margin: 0; text-align: center; flex: 1;">
+    <img src="./images/viewthatfits-h.png" alt="時刻と会場が横並びのレイアウト" style="width: 100%; border: 1px solid #000;" />
+    <figcaption style="font-size: 0.7em; color: #555;">横に収まる場合：HStack</figcaption>
+  </figure>
+  <figure style="margin: 0; text-align: center; flex: 1;">
+    <img src="./images/viewthatfits-v.png" alt="時刻と会場が縦積みになったレイアウト" style="width: 100%; border: 1px solid #000;" />
+    <figcaption style="font-size: 0.7em; color: #555;">収まらない場合：VStackへ</figcaption>
+  </figure>
+</div>
+
 
 ```swift
 // 時刻と会場：横に入らなければ自動で縦積みに切り替わる
@@ -60,131 +78,102 @@ ViewThatFits(in: .horizontal) {
 }
 ```
 
-`ViewThatFits` は与えた候補を上から試し、収まる最初のものを採用します。文字サイズの境界（AX1）を待たず、実際にはみ出した瞬間に縦組みへ切り替わるのがポイントです。
+#### 文字以外もサイズ変化に追従する `@ScaledMetric`
 
-> 当初は `@Environment(\.dynamicTypeSize)` を見て `if` で `HStack` / `VStack` を出し分けるカスタムコンテナ（`AStack`）を使っていました。ですが `if` / `else` の各分岐は別々の型を返すため、サイズが境界を跨ぐたびにビューが丸ごと作り直され、状態やアニメーションが保たれずパフォーマンス上も不利です。レイアウト段階で解決する `ViewThatFits` を基本にするのがおすすめです。
-
-### 数値や余白も追従させる `@ScaledMetric`
-
-文字サイズに追従するのは「文字」だけではありません。アイコンのサイズ、余白、そして後述するタップ領域も、`@ScaledMetric` を使えばDynamic Typeに比例して拡大できます。
+文字サイズに追従するのは「文字」だけではありません。アイコンのサイズ、余白、そして後述するタップ領域も変化させる必要があります。その際には、`@ScaledMetric` が活用できます。
 
 ```swift
-@ScaledMetric private var starSize: CGFloat = 18
-@ScaledMetric private var tapSize: CGFloat = 44
+@ScaledMetric private var starIconSize: CGFloat = 18
+@ScaledMetric private var tap[領域]Size: CGFloat = 44
 ```
 
-文字だけが大きくなってアイコンが取り残される、という不格好を防げます。
 
-同じく `lineLimit` も、固定すると大きな文字で途切れやすくなります。`@Environment(\.dynamicTypeSize)` を見て、アクセシビリティサイズのときだけ行数を増やすヘルパー（`a11yLineLimit(_:extra:)`）を1つ用意しておくと、見切れを減らしつつ通常時のレイアウトも保てます。
+### 情報量の変化に対応する
 
-<div style="display: flex; gap: 12px; justify-content: center; align-items: flex-start;">
-  <figure style="margin: 0; text-align: center;">
-    <img src="./images/dynamic-xsmall.png" alt="xSmallでのProgramme画面" style="height: 320px;" />
-    <figcaption style="font-size: 0.7em; color: #555;">xSmall</figcaption>
+`lineLimit` を使って行数を固定にしている場合、文字サイズによって文字の表示量が変化しユーザーがその画面で得れる情報量に変化が発生する懸念があります。その際には文字サイズに応じて行数を変化させることも検討してみると良いかもしれません。`@Environment(\.dynamicTypeSize)` を見て、見切れを減らしつつ通常時のレイアウトも保つことが可能です。
+
+<div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
+  <figure style="margin: 0; text-align: center; flex: 1;">
+    <img src="./images/dynamic-xsmall-crop.png" alt="xSmallでのProgramme画面" style="width: 100%; border: 1px solid #000;" />
+    <figcaption style="font-size: 0.7em; color: #555;">文字サイズ最小（xSmall）での表示</figcaption>
   </figure>
-  <figure style="margin: 0; text-align: center;">
-    <img src="./images/dynamic-ax5.png" alt="AX5でのProgramme画面。縦積みに切り替わっている" style="height: 320px;" />
-    <figcaption style="font-size: 0.7em; color: #555;">AX5（最大サイズ）</figcaption>
+  <figure style="margin: 0; text-align: center; flex: 1;">
+    <img src="./images/dynamic-ax5-crop.png" alt="AX5でのProgramme画面。縦積みに切り替わっている" style="width: 100%; border: 1px solid #000;" />
+    <figcaption style="font-size: 0.7em; color: #555;">最大サイズ（AX5）では行数を増やして見切れを防ぐ</figcaption>
   </figure>
 </div>
-
-## Vision｜読めるコントラストを実装で担保する
-
-コントラスト比はOSが自動で直してくれない領域の代表格です。指標としては **WCAG 2.1** が広く使われ、本文テキストは **4.5:1（AA）**、UI部品や大きな文字は **3:1** が下限とされます。
-
-### システムカラーは意外と落ちる
-
-ありがちな落とし穴が、`.foregroundStyle(.secondary)` です。システムの `.secondary` は白背景で約 **3.44:1**。本文テキストのAA（4.5:1）を満たしません。そこで、AAA（7:1）まで余裕を持つ独自トークンを定義し、専用モディファイアでアプリ全体に適用しました。
 
 ```swift
 extension View {
-    /// `.foregroundStyle(.secondary)` の代わりに使う。
-    /// システムの .secondary は白背景で 3.44:1 しかなく WCAG AA に届かない
-    func secondaryTextStyle() -> some View {
-        foregroundStyle(Color.textSecondary)   // 白背景 8.47:1 / 黒背景 8.84:1
+    /// Accessibility サイズ (AX1+) では行数を増やして見切れを防ぐ
+    func a11yLineLimit(_ standard: Int, extra: Int = 2) -> some View {
+        modifier(A11yLineLimitModifier(standard: standard, extra: extra))
+    }
+}
+
+private struct A11yLineLimitModifier: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let standard: Int
+    let extra: Int
+
+    func body(content: Content) -> some View {
+        content.lineLimit(dynamicTypeSize.isAccessibilitySize ? standard + extra : standard)
     }
 }
 ```
 
-ブランドカラー（`AccentColor`）も、ライト／ダークで同じ色のままだと片方で必ずコントラストが不足します。Asset Catalogで明暗を分け、ライトは `#0050D8`（白に6.77:1）、ダークは `#4B9DFF`（黒に7.8:1）を割り当てました。
+#### 文字サイズの変化を許容できない際のベストプラクティス
 
-### システムの `.yellow` / `.mint` は地に溶ける
+<figure style="float: right; margin: 0 0 8px 20px; text-align: center; display: inline-block;">
+  <img src="./images/large-content-viewer.png" alt="タブバーを長押しして拡大ラベルがHUD表示された状態" style="height: 300px; border: 1px solid #000; display: block;" />
+  <figcaption style="font-size: 0.7em; color: #555;">長押しで拡大ラベルをHUD表示（レイアウトは維持）</figcaption>
+</figure>
 
-セッション種別の色分けで `.yellow`（≒#FFCC02）や `.mint`（≒#00C7BE）をそのまま使うと、白背景で **1.5:1 / 2.4:1** 程度しかなく、大きな文字・UI部品の3:1すら下回ります。カードの上端ストライプやアイコンが背景に溶けてしまうのです。色味の印象を保ったまま、AAを満たす値へ置き換えました。
+タブバーやツールバーのように、デザイン上どうしても文字・アイコンを拡大できない要素もあります。とはいえ「小さいまま放置」では、拡大表示を必要とするユーザーがその要素を読めません。そこで使うのが **Large Content Viewer** です。
+
+Large Content Viewerは、アクセシビリティサイズ設定時に対象要素を**長押し**すると、画面中央に拡大したアイコンとラベルをHUDとしてオーバーレイ表示する仕組みです。レイアウトは一切崩さず、必要なときだけ大きく確認できます。標準のタブバーやツールバーはこれに自動対応しており、Appleのアプリで長押しすると拡大ラベルが出るのが確認できます。
+
+カスタムコントロールで同じ挙動を実現したい場合は、`.accessibilityShowsLargeContentViewer` で拡大時に見せる内容を渡します。
 
 ```swift
-/// .yellow は白背景で約1.5:1。AA(3:1) を満たす濃いアンバーへ
-private static let lightningTalksAccent = Color(red: 0.76, green: 0.54, blue: 0.04) // ≈#C28A0A 3.7:1
-/// .mint は白背景で約2.4:1。AA を満たすティールミントへ
-private static let lunchAccent = Color(red: 0.02, green: 0.60, blue: 0.54)          // ≈#05998A 3.9:1
+CompactIconButton(systemImage: "star.fill")
+    .accessibilityShowsLargeContentViewer {
+        Label("Favourite", systemImage: "star.fill")
+    }
 ```
 
-### 確認方法：Accessibility Inspector を使う
+見た目の密度は保ったまま、拡大表示を必要とするユーザーには「長押しで確認できる」逃げ道を用意できます。
 
-コントラストは目視では判断できません。判定には、Xcodeに付属する **Accessibility Inspector** を使いましょう。「Xcode → Open Developer Tool → Accessibility Inspector」から起動できます。
+<div style="clear: both;"></div>
 
-- **Color Contrast Calculator**：前景色・背景色を入力すると、コントラスト比とAA/AAAの合否がその場で出ます。色を決める前に、まずここへ通す習慣をつけるだけで多くの事故を防げます。
-- **Audit**：実機・シミュレータの画面を丸ごと走査し、コントラスト不足のほか、labelの欠落・タップ領域の不足・Dynamic Type非対応などをまとめて検出してくれます。
+## Vision｜色による視認性
+
+コントラスト比はコンパイルエラー等は出ず、人間の目視チェックでも人により、なかなか気づきづらいポイントになります。
+
+判定には、Xcodeに付属する **Accessibility Inspector** を使いましょう。「Xcode → Open Developer Tool → Accessibility Inspector」から起動できます。
 
 色を扱う場面では、勘で決めずに必ずAccessibility Inspectorで実測する。これを基本動作にしておくのがおすすめです。
 
-<!-- 画像: Accessibility Inspector のコントラスト計算結果／Audit の検出結果（任意） -->
+指標としては **WCAG 2.1** が広く使われ、本文テキストは **4.5:1（AA）**、UI部品や大きな文字は **3:1** が下限とされます[^wcag]。
 
-## Vision｜色だけで状態を伝えない
+[^wcag]: W3C "Web Content Accessibility Guidelines (WCAG) 2.1" — 達成基準 1.4.3 Contrast (Minimum)、1.4.11 Non-text Contrast。https://www.w3.org/TR/WCAG21/
 
-色覚特性のあるユーザーにとって、「赤＝重要」「黄＝Lightning」のような **色だけの区別** は伝わりません。HIGの "Differentiate Without Color" です。対策はシンプルで、**形（アイコン）や文言を一緒に添える** こと。
+### システムカラーだからアクセシビリティ大丈夫ではない
+`.foregroundStyle(.secondary)`、便利ですよね。私も何の疑いもなく使っていました——実測するまでは。システムの `.secondary` は白背景で約 **3.44:1** と、本文テキストのAA（4.5:1）に届きません。「Appleの色だからアクセシビリティは大丈夫」は必ずしも成り立たないのです。今回は、AAA（7:1）まで余裕を持つ独自トークンを定義し、専用モディファイアでアプリ全体に適用しました。ただし、AAで良しとするかAAAまで目指すかはコストとのトレードオフになるため、チーム内で「どの基準まで満たすか」の共通認識を先にそろえておくことをおすすめします。
 
-MythConfではセッション種別ごとにSF Symbolを割り当てました。WorkshopとTalkはどちらも青系で色だけでは見分けづらいので、形が決定打になります。
+さらに他にも `.yellow`や`.mint`などのシステムカラーでもは白背景でのコントラスト比は、それぞれ **約1.5:1**、 **約2.4:1** とUI部品の下限3:1の半分しかありません。色味の印象を保ったまま、AAを満たす値へ置き換えました。
 
-```swift
-var iconName: String? {
-    switch self {
-    case .talk:           return "mic.fill"
-    case .workshop:       return "hammer.fill"
-    case .panel:          return "person.3.fill"
-    case .lightningtalks: return "bolt.fill"
-    // …休憩や食事などの種別にもアイコンを割り当て、色だけに依存させない
-    }
-}
-```
+## Vision｜画面を見ずに音で操作する：VoiceOver
 
-同じ発想を、状態を表す箇所にも徹底します。お気に入りの星は、黄色という色だけでオン／オフを示すと、黄色を判別しづらいユーザーには伝わりません。そこで、オン時は塗りつぶし（`star` → `star.fill`）へ変えたうえで、`sparkles` を重ねます。色・塗り・パーティクルの三重で「お気に入り済み」が伝わります。
+VoiceOverは、iOSに標準搭載されたスクリーンリーダーです。画面上の要素を順にフォーカスし、その内容を音声で読み上げることで、画面を見ることなくアプリを操作できます。視覚に障害のあるユーザーだけでなく、運転中や歩行中など「画面を見られない状況」でも使われます。
 
-```swift
-Image(systemName: isFavourite ? "star.fill" : "star")
-    .foregroundStyle(isFavourite ? Color.yellow : Color.textSecondary)
-    .overlay(alignment: .topTrailing) {
-        if isFavourite {
-            Image(systemName: "sparkles") // 色や塗りに加えて「形」でも状態を示す
-        }
-    }
-```
+ただし、VoiceOverは「よしなに読み上げてくれる便利機能」ではありません。何も設計しなければ、ボタンはただ「ボタン」と読まれ、何のボタンかは誰にも分らないでしょう。
 
-<div style="display: flex; gap: 12px; justify-content: center; align-items: flex-start;">
-  <img src="./images/convey-1.png" alt="種別ごとにSF Symbolを割り当てたProgrammeカード" style="height: 300px;" />
-  <img src="./images/convey-2.png" alt="お気に入りの星にsparklesを重ねた状態" style="height: 300px;" />
-</div>
+VoiceOver対応は何を補足し何を読み上げないかが非常に大切です。それは目による情報密度と音による情報密度には圧倒的な差があり、いかに音による情報密度を上げるかが大切になってきます。
 
-## Vision｜「押せる」と気づかせる
+スピーカーのSNSリンクは、URLをそのまま読ませると「github.com スラッシュ alice」のように聞き取りづらくなります。URLのホストとパスを解析してサービスとアカウントを判定し、`accessibilityLabel` を「GitHubアカウント、alice」、未知のドメインなら「Website, example.com」のように組み立てれば、VoiceOverが**リンクの種類を先に**告げてくれます。あわせて `accessibilityInputLabels` に「GitHub」「Twitter」「Tweet」などの言い換えを入れておけば、Voice Controlからも呼び出せます。
 
-「ここはタップできる」という手がかりも、色だけに頼らず形で示します。状況によって使い分けるのがコツです。
-
-- **リストのセル**：行末に `chevron.right` を置き、「この行はタップで遷移する」と示す。会場・スピーカー行で使っています。
-- **本文中のリンク**：下線で本文と差別化する。
-- **本文中のボタン的な要素**：下線が使いにくい箇所では、円形背景つきの矢印（`arrow.up.right.circle.fill` など）で「押せる」と分かるようにする。
-- **外部アプリ・外部サイトへ飛ぶ場合**：行末に `arrow.up.right.square` を添えて、「これは別アプリ／別サイトに飛ぶ」と形で予告する。
-
-リンク色を区別しづらい人にも、操作の意味と遷移先が形で伝わります。
-
-とはいえ、デザインの都合でどうしても色だけで表現したい場面もあります。代表例がURLリンクです。一般的には下線で本文と差別化しますが、それが難しければ青系の色で示すことも検討の余地があります。ボタンのティントカラーの既定が青であることに加え、色覚特性の中で青が見えづらいユーザーの割合は非常に少ないためです。ただしこれは「他に手がない場合」に限った最終手段と捉え、基本は形や文言を添える前提を崩さないようにします。
-
-> ティントカラーの既定が青である背景は、iOSDC Japan 2024で発表した「[なぜデフォルトが青色！？ Tint Colorの理由に迫る](https://fortee.jp/iosdc-japan-2024/proposal/1b7698c6-31fb-433f-ba71-66ab19c4f14d)」で詳しく話しています。
-
-## Vision｜VoiceOverの読み上げを設計する
-
-ここからが本丸、VoiceOverです。VoiceOverは「読み上げてくれる便利機能」ではなく、**開発者が渡した情報をそのまま読む**だけの存在です。何も設計しなければ、ボタンが「ボタン」とだけ読まれたり、装飾アイコンまで延々読み上げられたりします。
-
-### 要素をまとめ、読み上げ順を決める
+<!-- 画像: VoiceOver のフォーカス枠が当たったカード（任意） -->
 
 セッションカードのように複数のテキストが集まった要素は、1つにまとめて読ませた方が圧倒的に速く理解できます。`.accessibilityElement(children: .combine)` でまとめ、`.accessibilitySortPriority` で読み上げ順を制御します。
 
@@ -210,6 +199,9 @@ var body: some View {
 
 ここでのコツは `.contain` の使い分けです。`.combine` だと全部が1つのボタンに融合してしまい、カード内の「お気に入り星」を個別に操作できません。`.contain` を使うことで「セッション本体（詳細へ遷移）」と「お気に入り（その場でトグル）」を **2つの独立したフォーカス先** として残しつつ、読み上げ順だけを整えられます。
 
+### 状態が変化した時に、変化後の状態を知らせる
+
+
 ### 地図はApple Mapsに丸投げする
 
 SwiftUIの `Map` は、VoiceOverの観点では非常に厄介です。ピンのパンやズームの読み上げが事実上操作不能で、ここで手が止まってしまいます。発想を変えて、**VoiceOver上では地図を「Apple Mapsを開く1つのボタン」に置き換え**ました。`accessibilityRepresentation` を使うと、見た目はインタラクティブな地図のまま、支援技術にだけ別の表現を渡せます。
@@ -224,13 +216,50 @@ LocationSnapshotMapView(location: location, coordinate: coordinate)
     }
 ```
 
-晴眼ユーザーには通常の地図、VoiceOver／Switch Controlユーザーには「使い慣れた、本当にアクセシブルなApple Maps」へのハンドオフ。両者を犠牲にしない折衷案です。
+晴眼ユーザーには通常の地図、VoiceOver／Switch Controlユーザーには使い慣れたApple Mapsへのハンドオフ。どちらの体験も犠牲にしません。餅は餅屋、地図は純正に任せるのが最善だと考えています。
 
-### URLから意味のあるラベルを組み立てる
+### 状態は色だけでなく「形」でも伝える
 
-スピーカーのSNSリンクは、URLをそのまま読ませると「github.com スラッシュ alice」のように聞き取りづらくなります。URLのホストとパスを解析してサービスとアカウントを判定し、`accessibilityLabel` を「GitHubアカウント、alice」、未知のドメインなら「Website, example.com」のように組み立てれば、VoiceOverが**リンクの種類を先に**告げてくれます。あわせて `accessibilityInputLabels` に「GitHub」「Twitter」「Tweet」などの言い換えを入れておけば、Voice Controlからも呼び出せます。
+状態の変化を色だけで表現するのは避けるべきデザインです。例えば、下の画像のお気に入りの星を、色を手がかりにせずオンかオフか即座に判断できるでしょうか？黄色という色だけでオン／オフを示すと、黄色を判別しづらいユーザーには伝わらない可能性があります。
 
-<!-- 画像: VoiceOver のフォーカス枠が当たったカード（任意） -->
+そこで、オン時は塗りつぶし（`star` → `star.fill`）へ変えたうえで、`sparkles` を重ねました。色・塗り・パーティクルの三重で「お気に入り済み」が伝わります。ほかにも、オンになった瞬間だけ発生するアニメーションやハプティックフィードバックで補う方法もあるでしょう。
+
+<div style="display: flex; gap: 12px; justify-content: center; align-items: flex-start;">
+  <figure style="margin: 0; text-align: center;">
+    <img src="./images/convey-1.png" alt="オフ状態のProgrammeカード。輪郭のみの星アイコン" style="height: 220px;" />
+    <figcaption style="font-size: 0.7em; color: #555;">オフ：輪郭のみの星（star）</figcaption>
+  </figure>
+  <figure style="margin: 0; text-align: center;">
+    <img src="./images/convey-2.png" alt="オン状態のProgrammeカード。塗りつぶした星にsparklesを重ねている" style="height: 220px;" />
+    <figcaption style="font-size: 0.7em; color: #555;">オン：塗りつぶし＋sparkles（star.fill）</figcaption>
+  </figure>
+</div>
+
+## Vision & Cognitive｜「押せる」と気づかせる
+
+「ここはタップできる」という手がかりも、色だけに頼らず形で示します。状況によって使い分けるのがコツです。
+
+- **リストのセル**：行末に `chevron.right` を置き、「この行はタップで遷移する」と示す。会場・スピーカー行で使っています。
+- **本文中のリンク**：下線で本文と差別化する。
+- **本文中のボタン的な要素**：下線が使いにくい箇所では、円形背景つきの矢印（`arrow.up.right.circle.fill` など）で「押せる」と分かるようにする。
+- **外部アプリ・外部サイトへ飛ぶ場合**：行末に `arrow.up.right.square` を添えて、「これは別アプリ／別サイトに飛ぶ」と形で予告する。
+
+<div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
+  <figure style="margin: 0; text-align: center; flex: 1;">
+    <img src="./images/affordance-chevron.png" alt="行末にchevron.rightを置いたセッション詳細の行" style="width: 100%; border: 1px solid #000;" />
+    <figcaption style="font-size: 0.7em; color: #555;">chevronで「タップで遷移」を予告</figcaption>
+  </figure>
+  <figure style="margin: 0; text-align: center; flex: 1;">
+    <img src="./images/affordance-external-link.png" alt="外部リンクにarrow.up.right.squareを添えたスピーカーのSNSリンク" style="width: 100%; border: 1px solid #000;" />
+    <figcaption style="font-size: 0.7em; color: #555;">外部リンクは矢印アイコンで予告</figcaption>
+  </figure>
+</div>
+
+リンク色を区別しづらい人にも、操作の意味と遷移先が形で伝わります。
+
+とはいえ、どうしても色を主な手がかりにしたい場面もあるかもしれません。代表例がURLリンクです。近年は下線で本文と差別化するのが主流ですが、それが難しければ青系の色で示すことも検討の余地があります。ボタンのティントカラーのデフォルト値が青であるためユーザーに新たな学習を促す必要がなく、また色覚特性の中で青を見分けづらいタイプの割合は非常に少ないからです。
+
+> URLやボタンの色が青である背景は、iOSDC Japan 2024で発表した [なぜデフォルトが青色！？ Tint Colorの理由に迫る] で詳しく話しています。
 
 ## Mobility｜「触れる」ことを保証する
 
@@ -284,22 +313,22 @@ Voice Controlは画面の表示文字で要素を呼び出しますが、ユー�
 ])
 ```
 
-英米のスペル違い（Favourite / Favorite）から、「Star」「Bookmark」「Save」といった同義語までカバーしておくと、ユーザーは自分の自然な言葉でボタンを押せます。日付ピッカーには「3 Thursday」「Thu」「Day 1」など、見た目・略記・通称をすべて登録しました。
+英米のスペル違い（Favourite / Favorite）から、「Star」「Bookmark」「Save」といった同義語までカバーしておくと、ユーザーは自分の自然な言葉でボタンを押せます。日付ピッカーには「3 Thursday」「Thu」「Day 1」、SNSリンクには「Tweet」やBlueskyの俗称「Skeet」まで登録しました。ユーザーが言いそうな言葉を先回りして拾っておくほど、音声操作は滑らかになります。
 
-<div style="display: flex; gap: 12px; justify-content: center; align-items: flex-start;">
-  <figure style="margin: 0; text-align: center;">
-    <img src="./images/tap-target.png" alt="44pt以上を確保したタップ領域の可視化" style="height: 240px;" />
+<div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
+  <figure style="margin: 0; text-align: center; flex: 0 0 42%;">
+    <img src="./images/tap-target.png" alt="44pt以上を確保したタップ領域の可視化" style="width: 100%;" />
     <figcaption style="font-size: 0.7em; color: #555;">44ptのタップ領域</figcaption>
   </figure>
-  <figure style="margin: 0; text-align: center;">
-    <img src="./images/voicecontrol-labels.png" alt="Voice Controlの番号オーバーレイが表示された画面" style="height: 320px;" />
+  <figure style="margin: 0; text-align: center; flex: 0 0 52%;">
+    <img src="./images/voicecontrol-crop.png" alt="Voice Controlの呼び名オーバーレイが表示された画面" style="width: 100%;" />
     <figcaption style="font-size: 0.7em; color: #555;">Voice Controlの呼び名表示</figcaption>
   </figure>
 </div>
 
 ## Cognitive｜迷わせない・驚かせない
 
-Cognitiveは認知面の配慮です。専門用語より「わかりやすさ」「一貫性」「予測可能性」が効きます。
+Cognitiveは認知面の配慮です。ここでは特別なAPIはほとんど登場しません。効くのは「わかりやすさ」「一貫性」「予測可能性」という、UI設計の基本そのものです。
 
 ### ラベルと語彙の一貫性
 
@@ -309,7 +338,7 @@ Cognitiveは認知面の配慮です。専門用語より「わかりやすさ�
 
 ### Reduce Motion：動きを止める
 
-前庭系に敏感なユーザーのために、`@Environment(\.accessibilityReduceMotion)` がオンのときは自動で動く演出を止めます。MythConfには、並行セッションを8秒ごとに切り替えて表示する画面下部のバナーがありますが、Reduce Motion時はこの自動切り替えを停止し、静的なサマリーに切り替えます。
+動きに敏感なユーザーがいる可能性も考慮に入れましょう、`@Environment(\.accessibilityReduceMotion)` がオンのときは自動で動く演出を止めます。MythConfには、並行セッションを8秒ごとに切り替えて表示する画面下部のバナーがありますが、Reduce Motion時はこの自動切り替えを停止し、静的なサマリーに切り替えます。
 
 ```swift
 @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -323,7 +352,7 @@ private func advanceCycleIfNeeded() {
 
 長いタイトルを流す `MarqueeText` も、Reduce Motion時はスクロールを止めて末尾省略の静的テキストにします。なお、表示が省略されていても **VoiceOverには常に全文を渡す**（`.accessibilityLabel(Text(text))`）ようにしてあり、見た目の都合で情報が欠けることはありません。
 
-## Hearing & Speech｜ボーナスの2カテゴリ
+## Hearing & Speech｜音に頼らない・声に頼らせない
 
 ### Hearing：音だけに頼らず触覚でも伝える
 
@@ -356,6 +385,11 @@ if shouldShowCache {
 「道に迷っている、まさにその瞬間に画面が真っ白」という最悪のケースを潰せます。このほか、固定ヘッダーの `.ultraThinMaterial`（Reduce Transparency時はiOSが自動で不透明化）や、`\.locale` 環境を実行時に差し替える多言語化なども、同じ「全員の底上げ」の発想で実装しました。
 
 ## まとめ
+
+会社はマーケットを見て動いています。もちろん特定のユーザーのために数十万コストをかけて対応するのはコスパに見合ってないかもしれません。
+しかし、アクセシビリティ対応の術を知っていると知っていないでは大きく違うと考えています。そこにビジネスチャンスがあるかもしれません。
+
+
 
 アクセシビリティ対応は、特別な誰かのための機能追加ではなく、**実装品質そのもの**です。OSが用意した支援技術に「正しい情報を渡す」こと、そしてコントラストやタップ領域のように **実装でしか担保できない領域** を意識すること。本記事で挙げた施策は、どれも明日からあなたのアプリに1つずつ取り入れられるものばかりです。
 
