@@ -71,11 +71,11 @@ ViewThatFits(in: .horizontal) {
 
 <div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
   <figure style="margin: 0; text-align: center; flex: 1;">
-    <img src="./images/viewthatfits-h.png" alt="時刻と会場が横並びのレイアウト" style="width: 100%; border: 1px solid #000;" />
+    <img src="./images/viewthatfits-h.png" alt="時刻と会場が横並びのレイアウト" style="height: 120px; width: auto; max-width: 100%; object-fit: contain; border: 1px solid #000;" />
     <figcaption style="font-size: 0.7em; color: #555;">横に収まる場合：HStack</figcaption>
   </figure>
   <figure style="margin: 0; text-align: center; flex: 1;">
-    <img src="./images/viewthatfits-v.png" alt="時刻と会場が縦積みになったレイアウト" style="width: 100%; border: 1px solid #000;" />
+    <img src="./images/viewthatfits-v.png" alt="時刻と会場が縦積みになったレイアウト" style="height: 120px; width: auto; max-width: 100%; object-fit: contain; border: 1px solid #000;" />
     <figcaption style="font-size: 0.7em; color: #555;">収まらない場合：VStackへ</figcaption>
   </figure>
 </div>
@@ -214,7 +214,7 @@ LocationMapView(location: location, coordinate: coordinate)
 
 ### 状態は色だけでなく「形」でも伝える
 
-状態を色だけで示すのは避けたいデザインです。下の星は、黄色を判別しづらいユーザーには状態が伝わりづらい可能性があります。そこでオン時は塗りつぶしに、`sparkles` を重ねました。アニメーションやハプティクスで補うのも手です。
+状態を色だけで示すのは避けたいところです。下の星は黄色を判別しづらいと状態が伝わりづらい可能性があります。そこで形の変化に加え、アニメーションやハプティクスでも補いました。
 
 <div style="display: flex; gap: 12px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
   <figure style="margin: 0; text-align: center;">
@@ -234,43 +234,37 @@ LocationMapView(location: location, coordinate: coordinate)
 
 ## Vision & Cognitive｜「押せる」と気づかせる
 
-「ここはタップできる」という手がかりを、形や色で明確に示すことも非常に重要です。
+「押せるかどうかを考えさせない」「押した結果に驚かせない」操作できることを形や色であらかじめ明示しておくことも、非常に重要です。
 
-- **リストのセル**：行末に `chevron.right` を置き「タップで遷移する」と示す。
-- **本文中のリンク**：下線や色で本文と差別化する。
-- **ボタン的な要素**：下線が使いにくい箇所は円形背景つきの矢印（`arrow.up.right.circle.fill` など）で「押せる」と示す。
-- **外部アプリ・サイトへ飛ぶ場合**：行末に `arrow.up.right.square` を添え「別アプリ／別サイトに飛ぶ」と明示する。
-- **URLリンク**：下線での差別化が難しければ青系の色で示すのも手。ユーザーに新たな学習を強いず、青を見分けづらい色覚特性の割合も少ないため。
-
-> URLやボタンの色が青である背景は、 [なぜデフォルトが青色！？ Tint Colorの理由に迫る by akidon0000 (iOSDC Japan 2024 ルーキーズLT)] で詳しく話しています。
+> URLやボタンの色によく青色が使われている理由については、 [なぜデフォルトが青色！？ Tint Colorの理由に迫る by akidon0000 (iOSDC Japan 2024 ルーキーズLT)] で詳しく話しています。
 
 <div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
   <figure style="margin: 0; text-align: center; flex: 1;">
-    <img src="./images/session-card.jpg" alt="行末にchevron.rightを置いたセッション詳細の行" style="width: 100%; border: 1px solid #000;" />
+    <img src="./images/session-card.jpg" alt="行末にchevron.rightを置いたセッション詳細の行" style="height: 130px; width: auto; max-width: 100%; object-fit: contain; border: 1px solid #000;" />
     <figcaption style="font-size: 0.7em; color: #555;">chevronで「タップで遷移」を予告</figcaption>
   </figure>
   <figure style="margin: 0; text-align: center; flex: 1;">
-    <img src="./images/speaker-profile.jpg" alt="外部リンクにarrow.up.right.squareを添えたスピーカーのSNSリンク" style="width: 100%; border: 1px solid #000;" />
+    <img src="./images/speaker-profile.jpg" alt="外部リンクにarrow.up.right.squareを添えたスピーカーのSNSリンク" style="height: 130px; width: auto; max-width: 100%; object-fit: contain; border: 1px solid #000;" />
     <figcaption style="font-size: 0.7em; color: #555;">外部リンクは矢印アイコンで予告</figcaption>
   </figure>
 </div>
 
-## その他の領域でやったこと（Mobility / Cognitive / Hearing / Speech）
 
-残りの領域も、これまでと同じ「OSに正しい情報を渡し、実装でしか担保できない部分を補う」発想で一通り対応しました。要点だけまとめます。
+## その他のやったこと
 
-- **Mobility｜タップ領域は44×44pt以上**：アイコンが小さくても当たり判定は44pt確保。`.frame(minWidth: 44, minHeight: 44)` に `.contentShape(.rect)` を添えて透明部分まで反応させ、`@ScaledMetric` で拡大時に一緒に広げる。
-- **Mobility｜ジェスチャには必ず代替を**：日付切り替えはピッカー＋左右スワイプ、`NavigationStack` の画面端スワイプ戻るも有効化。「ジェスチャでしかできない操作」を作らない。
-- **Cognitive｜語彙と表示の一貫性**：同じ操作は同じ言葉（お気に入り＝Favourite / Save、地図＝Open in Maps）。タブは「3 Thu」表記、検索ゼロ件は `ContentUnavailableView` で明示。
-- **Cognitive｜Reduce Motion**：`@Environment(\.accessibilityReduceMotion)` がオンなら自動アニメーション（並行セッションの自動切り替えやMarqueeスクロール）を止めて静的表示に。省略時もVoiceOverには全文を渡す。
-- **Hearing｜音に触覚を添える**：`.sensoryFeedback(.success, trigger:)` で、音が聞こえなくても操作の成否が伝わる。
-- **Speech / Switch Control｜声もタッチも使わず操作できる**：⌘1〜4・⌘F・⌘Dなどのショートカットを、画面に出ない隠しボタン（`.background` + `.hidden()`）で実装。地図を単一ボタンに畳む・要素をまとめる工夫も、スイッチ操作の手数削減にそのまま効く。
+残りの領域も、「どんな状況でも情報に辿り着ける」ために という思想で対応しました。
 
-枠を超えたUX向上としても、Wi-Fiが不安定な会場を想定した**オフライン地図**（`MKMapSnapshotter` でライト/ダーク両方をキャッシュし、`NetworkMonitor` がオフラインを検知したらキャッシュ画像へ差し替え）や、`.ultraThinMaterial`・実行時の多言語切り替えなどを、同じ「全員の底上げ」の発想で実装しました。
-
-### Voice Controlは「言いそうな言葉」を全部登録する
-
-その中でも少し掘り下げたいのがVoice Control対応です。Voice Controlは画面の表示文字で要素を呼び出しますが、ユーザーが必ずしも表示どおりに言うとは限りません。そこで `.accessibilityInputLabels` に **言い換えの候補** をまとめて登録しておきます。
+- **Mobility｜タップ領域は44×44pt以上**：アイコンが小さくても当たり判定は44pt確保し、透明部分まで反応させる。文字サイズの拡大にも連動させる。
+- **Mobility｜ジェスチャには必ず代替を**：日付切り替えはピッカー＋左右スワイプ、画面端スワイプ戻るも有効化し、「ジェスチャ限定の操作」を作らない。
+- **Speech / Mobility｜キーボードだけで全機能を操作**：Full Keyboard Access で端から端まで到達可能に。
+  - `⌘1〜4` でタブ移動、`⌘F` で検索、`⌘D` でお気に入りトグル。星までTab連打せず保存できる。
+- **Cognitive｜語彙と表示の一貫性**：同じ操作は同じ言葉（Favourite / Save、Open in Maps）。タブは日付＋曜日の「3 Thu」と表記。
+- **Cognitive｜細部の読み上げ**：件数は「1 session／3 sessions」と複数形を出し分ける。
+- **Cognitive｜Reduce Motion／自動で消えるUIを作らない**：オン時はアニメーションをを静的表示にする。シート・アラート・バナーは必ずユーザー操作で閉じる仕組みへ。
+- **Hearing｜音に触覚を添える**：お気に入りの切り替えに成功ハプティクスを添え、音が聞こえなくても成否が伝わるように。
+- **Speech / Switch Control｜手数を減らす**：地図を「Open in Maps」の単一ボタンに畳み、要素をまとめて読み上げ順も整理。
+- **Vision / Mobility｜横向き対応**：横向きではナビバーを隠して縦の画素をコンテンツへ回す。会場詳細は地図と説明を左右2カラムに切り替え、縦に戻せば元に戻る仕組みへ。
+- **Speech｜Voice Controlは「言いそうな言葉」を全部登録**：表示文字と違う言い方でも呼び出せるよう、言い換え候補をまとめて登録する。お気に入りの星は英米スペル違い（Favourite / Favorite）や「Star」「Bookmark」「Save」、日付ピッカーは「Thursday」「Day 1」、SNSリンクは「Tweet」やBlueskyの俗称「Skeet」まで。言いそうな言葉を先回りするほど音声操作は滑らかになる。
 
 ```swift
 // お気に入りの星：英米スペル違いや同義語をまとめて登録
@@ -278,20 +272,18 @@ LocationMapView(location: location, coordinate: coordinate)
     "Favourite", "Favorite", "Star", "Bookmark",
     "Save", "Add to schedule", "Remove from schedule"
 ])
-```
-
-英米のスペル違い（Favourite / Favorite）から「Star」「Bookmark」「Save」といった同義語までカバーすると、ユーザーは自分の自然な言葉でボタンを押せます。
-
-同じ発想は日付ピッカーにも効きます。画面には「3 Thu」とだけ出ていても、ユーザーは「3 Thursday」「Thursday」「Day 1」など様々に呼びます。そこで表示どおりの呼び方に加え、フル曜日や「Day N」も候補として登録しておきます。
-
-```swift
 // 日付タブ：見たまま + 省略形 + 「Day N」を全部受け付ける
 .accessibilityInputLabels([
     "3 Thursday", "3 Thu", "Thursday", "Thu", "Day 1"
 ])
 ```
 
-SNSリンクには「Tweet」やBlueskyの俗称「Skeet」まで登録しました。言いそうな言葉を先回りして拾うほど、音声操作は滑らかになります。
+また以下は厳密にはアクセシビリティとは呼べないかもしれません。しかし「誰もが情報へ容易に辿り着ける」という同じ思想のもとで実装した、枠を超えたUX向上です。
+
+- **オフライン会場地図**：地図画像をキャッシュし、オフライン検知でキャッシュ画像へ差し替え。
+- **日時で自動切替する下部バナー**：「開催前カウントダウン → 会期中 → 終了後」の4状態を自動切替し、会期のどこにいるか一目で把握。
+- **SNSリンクのブランドロゴ**：URLを解析しGitHub / X / LinkedIn / Mastodon / Bluesky / YouTubeを判定してロゴ表示。
+- そのほか `.ultraThinMaterial` や実行時の多言語切り替えも実装。
 
 <div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
   <figure style="margin: 0; text-align: center; flex: 0 0 42%;">
