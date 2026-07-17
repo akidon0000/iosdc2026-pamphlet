@@ -286,11 +286,11 @@ LocationMapView(location: location, coordinate: coordinate)
 - そのほか `.ultraThinMaterial` や実行時の多言語切り替えも実装。
 
 <div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
-  <figure style="margin: 0; text-align: center; flex: 0 0 42%;">
+  <figure style="margin: 0; text-align: center; flex: 0 0 38%;">
     <img src="./images/tap-target.png" alt="44pt以上を確保したタップ領域の可視化" style="width: 100%;" />
     <figcaption style="font-size: 0.7em; color: #555;">44ptのタップ領域</figcaption>
   </figure>
-  <figure style="margin: 0; text-align: center; flex: 0 0 52%;">
+  <figure style="margin: 0; text-align: center; flex: 0 0 47%;">
     <img src="./images/voicecontrol-crop.png" alt="Voice Controlの呼び名オーバーレイが表示された画面" style="width: 100%;" />
     <figcaption style="font-size: 0.7em; color: #555;">Voice Controlの呼び名表示</figcaption>
   </figure>
@@ -298,33 +298,35 @@ LocationMapView(location: location, coordinate: coordinate)
 
 ## 最後に
 
-会社はマーケットを見て動いています。もちろん特定のユーザーのために数十万コストをかけて対応するのはコスパに見合ってないかもしれません。
-しかし、アクセシビリティ対応の術を知っていると知っていないでは大きく違うと考えています。
+あなたのアプリは、VoiceOverでどう読み上げられるでしょうか。文字サイズを最大にしたとき、レイアウトは崩れずに情報を届けられるでしょうか。MythConfがそうだったように、見た目は完成していても、使い方を変えた瞬間に「辿り着けない情報」が生まれているかもしれません。
 
+とはいえ、会社プロダクトはマーケットを見て動くものであり、アクセシビリティ対応の優先度が上がりにくいのも事実です。しかし、振り返ってみてください。`accessibilityLabel` の組み立ても `ViewThatFits` への置き換えも、術さえ知っていれば数行の実装でした。**コストが高いから後回しになるのではなく、知らないから高くついて見えるだけ**——だからこそ、対応の術を知っていること自体に大きな価値があると私は考えています。
 
-アクセシビリティ対応は、特別な誰かのための機能追加ではなく、**実装品質そのもの**です。OSが用意した支援技術に「正しい情報を渡す」こと、そしてコントラストやタップ領域のように **実装でしか担保できない領域** を意識すること。本記事で挙げた施策は、どれも明日からあなたのアプリに1つずつ取り入れられるものばかりです。
+その価値は、今後さらに増していきます。近年、AIがユーザーに代わって画面を読み取り操作する際、VoiceOverと同じアクセシビリティツリーを手がかりにすることがあります。支援技術へ正しい情報を渡せているアプリは **AIにとっても扱いやすいアプリ** になる——アクセシビリティ対応は、AI時代への備えでもあるのです。
 
-そして極論を言えば、**画面回転への対応や、iPhone・iPad・Vision Proといった各デバイス・各サイズへの対応もアクセシビリティです**。横向きで固定されたり、特定のデバイスでレイアウトが破綻したりすれば、その向き・その端末を使う人は情報にたどり着けません。冒頭で述べた「誰もが・どんな状況でも、必要な情報に辿り着けること」へ、Dynamic TypeやVoiceOverもすべて地続きでつながっています。
+アクセシビリティ対応は、特別な誰かのための機能追加ではありません。OSの支援技術へ正しい情報を渡し、コントラストやタップ領域のように **実装でしか担保できない領域** へ目を配る——**誰もが・どんな状況でも、必要とする情報に辿り着ける** ための実装品質そのものです。極論を言えば、画面回転やiPhone・iPad・Vision Proといった各デバイス・各サイズへの対応も、この一点に地続きです。
 
-まずは自分のアプリでVoiceOverをオンにし、Dynamic Typeを最大まで上げて、端から端まで触ってみてください。きっと、直したくなる場所が見つかります。
+本記事で挙げた施策は、どれも明日から1つずつ取り入れられます。まずは自分のアプリでVoiceOverをオンにし、Dynamic Typeを最大まで上げて、端から端まで触ってみてください。冒頭の2つの問いの答えと、直したくなる場所が、きっと見つかるはずです。
 
 ---
 
 <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
   <div style="flex: 0 0 auto; text-align: center;">
-    <img src="./images/qr-pr.png" alt="実装PRへのQRコード" style="max-width: 80px; height: auto;" /><br>
+    <img src="./images/qr-pr.png" alt="実装PRへのQRコード" style="max-width: 72px; height: auto;" /><br>
     <span style="font-size: 0.7em; color: #555;">本記事で解説した実装PR</span>
   </div>
   <div style="flex: 0 0 24px;"></div>
   <div style="flex: 0 0 auto; text-align: center;">
-    <img src="./images/qr-appstore.png" alt="iOSDevUK26アプリのApp StoreへのQRコード" style="max-width: 80px; height: auto;" /><br>
+    <img src="./images/qr-appstore.png" alt="iOSDevUK26アプリのApp StoreへのQRコード" style="max-width: 72px; height: auto;" /><br>
     <span style="font-size: 0.7em; color: #555;">iOSDevUK26アプリ (App Store)</span>
   </div>
-      <div class="profile-container">
-    <img src="./images/icon.jpg" alt="アイコン" class="profile-icon" style="height: 40px;" />
-    <div class="profile-text-area">
-      <div class="profile-text-main">#akidon0000 (あきどん)</div>
-      <div class="profile-text-sub">アドバイザー：@mtj_j</div>
+  <div style="flex: 0 0 auto;">
+    <div class="profile-container">
+      <img src="./images/icon.jpg" alt="アイコン" class="profile-icon" style="height: 40px;" />
+      <div class="profile-text-area">
+        <div class="profile-text-main">#akidon0000 (あきどん)</div>
+      </div>
     </div>
+    <div class="profile-text-sub" style="margin-top: 4px;">謝辞：🦌</div>
   </div>
 </div>
