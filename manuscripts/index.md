@@ -24,7 +24,7 @@ iOSには、VoiceOverやDynamic Type、Voice Controlといった強力な支援�
   <figcaption style="font-size: 0.7em; color: #555;">MythConfのProgramme画面</figcaption>
 </figure>
 
-iOSDevUK Accessibility Challengeは、MythConf という架空カンファレンスアプリを題材にアクセシビリティを向上を競うコンペティションです。このアプリはMProgramme、Speakers、Locations、My Scheduleの4タブを持ち、アクセシビリティの観点で改善できる箇所が多数存在していました。
+iOSDevUK Accessibility Challengeは、MythConf という架空カンファレンスアプリを題材にアクセシビリティの向上を競うコンペティションです。このアプリはProgramme、Speakers、Locations、My Scheduleの4タブを持ち、アクセシビリティの観点で改善できる箇所が多数存在していました。
 
 最初にVoiceOverをオンにして題材アプリを触ると、セッションカードは断片的な単語を何度も読み上げ、地
 図へ入ると操作に迷い、最大文字サイズでは会場名が画面からこぼれました。見た目には完成しているアプ
@@ -52,7 +52,7 @@ Appleはアクセシビリティ対応のガイドラインを、利用者の特
 
 文字サイズが大きくなった際の簡単な対策は「横に収まらなければ縦に積む」ことです。ここで使うのが `ViewThatFits` です。`ViewThatFits` は与えた候補を上から試し、収まる最初のものを採用します。文字サイズの境界（AX1）を待たず、実際にはみ出した瞬間に縦積みへ切り替わるのがポイントです。
 
-> ViewThatFitsは、HStackやVStackなどビューが変化したとしてもビューが作り直されることはなく、パフォーマンスの低下を防ぐとこができます。仮に `if` / `else` の各分岐で実装した場合、サイズが境界を跨ぐたびにビューが丸ごと作り直され、パフォーマンスも低下していたでしょう。
+> ViewThatFitsは、HStackやVStackなどビューが変化したとしてもビューが作り直されることはなく、パフォーマンスの低下を防ぐことができます。
 
 ```swift
 // 時刻と会場：横に入らなければ自動で縦積みに切り替わる
@@ -92,7 +92,7 @@ ViewThatFits(in: .horizontal) {
 
 ### 情報量の変化に対応する
 
-`lineLimit` を使って行数を固定にしている場合、文字サイズによって文字の表示量が変化しユーザーがその画面で得れる情報量に変化が発生する懸念があります。その際には文字サイズに応じて行数を変化させることも検討してみると良いかもしれません。`@Environment(\.dynamicTypeSize)` を見て、見切れを減らしつつ通常時のレイアウトも保つことが可能です。
+`lineLimit` を使って行数を固定にしている場合、文字サイズによって文字の表示量が変化しユーザーがその画面で得られる情報量に変化が発生する懸念があります。その際には文字サイズに応じて行数を変化させることも検討してみると良いかもしれません。`@Environment(\.dynamicTypeSize)` を見て、見切れを減らしつつ通常時のレイアウトも保つことが可能です。
 
 <div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
   <figure style="margin: 0; text-align: center; flex: 1;">
@@ -246,11 +246,11 @@ LocationMapView(location: location, coordinate: coordinate)
 
 <div style="display: flex; gap: 10px; justify-content: center; align-items: flex-start;">
   <figure style="margin: 0; text-align: center; flex: 1;">
-    <img src="./images/affordance-chevron.png" alt="行末にchevron.rightを置いたセッション詳細の行" style="width: 100%; border: 1px solid #000;" />
+    <img src="./images/session-card.jpg" alt="行末にchevron.rightを置いたセッション詳細の行" style="width: 100%; border: 1px solid #000;" />
     <figcaption style="font-size: 0.7em; color: #555;">chevronで「タップで遷移」を予告</figcaption>
   </figure>
   <figure style="margin: 0; text-align: center; flex: 1;">
-    <img src="./images/affordance-external-link.png" alt="外部リンクにarrow.up.right.squareを添えたスピーカーのSNSリンク" style="width: 100%; border: 1px solid #000;" />
+    <img src="./images/speaker-profile.jpg" alt="外部リンクにarrow.up.right.squareを添えたスピーカーのSNSリンク" style="width: 100%; border: 1px solid #000;" />
     <figcaption style="font-size: 0.7em; color: #555;">外部リンクは矢印アイコンで予告</figcaption>
   </figure>
 </div>
@@ -304,11 +304,10 @@ SNSリンクには「Tweet」やBlueskyの俗称「Skeet」まで登録しまし
   </figure>
 </div>
 
-## まとめ
+## 最後に
 
 会社はマーケットを見て動いています。もちろん特定のユーザーのために数十万コストをかけて対応するのはコスパに見合ってないかもしれません。
-しかし、アクセシビリティ対応の術を知っていると知っていないでは大きく違うと考えています。そこにビジネスチャンスがあるかもしれません。
-
+しかし、アクセシビリティ対応の術を知っていると知っていないでは大きく違うと考えています。
 
 
 アクセシビリティ対応は、特別な誰かのための機能追加ではなく、**実装品質そのもの**です。OSが用意した支援技術に「正しい情報を渡す」こと、そしてコントラストやタップ領域のように **実装でしか担保できない領域** を意識すること。本記事で挙げた施策は、どれも明日からあなたのアプリに1つずつ取り入れられるものばかりです。
@@ -333,6 +332,7 @@ SNSリンクには「Tweet」やBlueskyの俗称「Skeet」まで登録しまし
     <img src="./images/icon.jpg" alt="アイコン" class="profile-icon" style="height: 40px;" />
     <div class="profile-text-area">
       <div class="profile-text-main">#akidon0000 (あきどん)</div>
+      <div class="profile-text-sub">アドバイザー：@mtj_j</div>
     </div>
   </div>
 </div>
